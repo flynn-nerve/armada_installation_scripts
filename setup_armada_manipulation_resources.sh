@@ -10,30 +10,52 @@ if [ -z $1 ]
     exit
 fi
 
+# https://en.wikipedia.org/wiki/ANSI_escape_code
+# https://stackoverflow.com/questions/5947742/how-to-change-the-output-color-of-echo-in-linux
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+build() {
+    # install any dependencies then build
+    cd ~/$WORKSPACE
+    source devel/setup.bash
+    rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
+    catkin build
+    source devel/setup.bash
+}
+
+printmsg() {
+    echo -e "${GREEN}$1${NC}"
+}
+
+printwrn() {
+    echo -e "${RED}$1${NC}"
+}
+
 # install moveit (these packages have useful reference code and deps we can use for other packages)
-git clone https://github.com/ros-planning/moveit_tutorials.git -b master
-git clone https://github.com/ros-planning/panda_moveit_config.git -b melodic-devel
+sudo apt install ros-$ROS_DISTRO-moveit -y
+cd ~/$WORKSPACE/src
+git clone -b $ROS_DISTRO-devel https://github.com/ros-planning/moveit_tutorials.git
+git clone -b $ROS_DISTRO-devel https://github.com/ros-planning/panda_moveit_config.git
 
 # install gpd library
 cd ~/$WORKSPACE/src
 git clone https://github.com/atenpas/gpd
+sed -i -e 's/PCL 1.9 REQUIRED/PCL REQUIRED/g' ~/$WORKSPACE/src/gpd/CMakeLists.txt
 cd gpd
 mkdir build && cd build
 cmake ..
 make -j
-sudo make install -y
+sudo make install
 
 # clone and install gpd_ros
 cd ~/$WORKSPACE/src
 git clone -b master https://github.com/atenpas/gpd_ros
-cd ~/$WORKSPACE
-source devel/setup.bash
+sed -i -e 's/PCL 1.9 REQUIRED/PCL REQUIRED/g' ~/$WORKSPACE/src/gpd_ros/CMakeLists.txt
 
 # install any dependencies then build
-cd ~/$WORKSPACE
-rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
-catkin build
-source devel/setup.bash
+build
 
 # clone uml_robotics/uml_hri_nerve_armada_workstation package
 cd ~/$WORKSPACE/src
@@ -42,10 +64,7 @@ git clone -b master https://github.com/uml-robotics/uml_hri_nerve_armada_worksta
 git clone -b master https://github.com/uml-robotics/uml_hri_nerve_pick_and_place.git
 
 # install any dependencies then build
-cd ~/$WORKSPACE
-rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
-catkin build
-source devel/setup.bash
+build
 
 # clone uml_robotics/universal_robot package
 cd ~/$WORKSPACE/src
@@ -54,25 +73,17 @@ git clone -b dev/bflynn https://github.com/uml-robotics/universal_robot.git
 git clone -b dev/bflynn https://github.com/uml-robotics/kinova-ros.git
 
 # install any dependencies then build
-cd ~/$WORKSPACE
-rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
-catkin build
-source devel/setup.bash
+build
 
-# clone and install ros_kortex package and libraries
+# clone and install ros_kortex package and libraries, install deps and build
 sudo apt install python3 python3-pip -y
-sudo python3 -m pip install conan -y
+sudo python3 -m pip install conan
 conan config set general.revisions_enabled=1
 conan profile new default --detect > /dev/null
 conan profile update settings.compiler.libcxx=libstdc++11 default
 cd ~/$WORKSPACE/src
 git clone -b dev/workstation_sim https://github.com/uml-robotics/ros_kortex.git
-
-# install any dependencies then build
-cd ~/$WORKSPACE
-rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
-catkin build
-source devel/setup.bash
+build
 
 ## clone librealsense package
 cd ~/$WORKSPACE/src
@@ -88,50 +99,33 @@ sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/
 ## install additional libraries
 sudo apt-get install librealsense2-dkms librealsense2-utils librealsense2-dev librealsense2-dbg -y
 
-## update and upgrade
+## update, upgrade, install deps and build
 sudo apt-get update && sudo apt-get upgrade -y
-
-## check for and install missing dependencies and build workspace
-rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
-cd ~/$WORKSPACE
-catkin build
-source devel/setup.bash
+build
 
 ## run realsense camera scripts to add cameras to udev rules and patch software
 ## your cameras WILL NOT WORK without allowing this step to happen
 cd ~/$WORKSPACE/src/librealsense
 ./scripts/setup_udev_rules.sh
+printwrn "This script will require you to enter your password at some point"
 ./scripts/patch-realsense-ubuntu-lts.sh
 
-## clone realsense package (not realsense-ros package)
-## clone ddynamic_reconfigure package into realsense package
+## clone realsense package (not realsense-ros package) then clone ddynamic_reconfigure package into realsense package
 cd ~/$WORKSPACE/src/
 git clone -b development https://github.com/doronhi/realsense.git
 cd realsense
-git clone -b $ROS_DISTRO-devel https://github.com/pal-robotics/ddynamic_reconfigure.git
+git clone -b kinetic-devel https://github.com/pal-robotics/ddynamic_reconfigure.git
 
-## install rgbd_launch/rs_camera package for realsense cameras
-cd ~/$WORKSPACE/
+## install rgbd_launch/rs_camera package for realsense cameras, install deps and build
 sudo apt-get install ros-$ROS_DISTRO-rgbd-launch -y
+build
 
-# install any dependencies then build
-cd ~/$WORKSPACE
-rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
-catkin build
-source devel/setup.bash
-
-# clone ros_kortex_vision package and install libraries
+# clone ros_kortex_vision package and install libraries, update deps and build
 sudo apt install gstreamer1.0-tools gstreamer1.0-libav libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-base -y
 cd ~/$WORKSPACE/src/
-git clone -b master git clone https://github.com/Kinovarobotics/ros_kortex_vision.git
+git clone -b master https://github.com/Kinovarobotics/ros_kortex_vision.git
+build
 
-# install any dependencies then build
-cd ~/$WORKSPACE
-rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
-catkin build
-source devel/setup.bash
-
-
-
-
-
+mkdir ~/.gazebo/models
+cd ~/.gazebo/models
+git clone -b https://github.com/osrf/gazebo_models.git
