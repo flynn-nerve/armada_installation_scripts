@@ -50,6 +50,7 @@ cmake ..
 make -j
 sudo make install
 
+# going to need to fork this repo -----------------------------------------
 printmsg "Cloning and installing the gpd_ros package"
 cd ~/$WORKSPACE/src
 git clone -b master https://github.com/atenpas/gpd_ros
@@ -66,7 +67,7 @@ build
 printmsg "Cloning the uml_robotics/universal_robot package"
 cd ~/$WORKSPACE/src
 git clone -b dev/bflynn https://github.com/uml-robotics/universal_robot.git
-printmsg "Cloneingthe uml_robotics/kinova-ros package"
+printmsg "Cloning the uml_robotics/kinova-ros package"
 git clone -b dev/bflynn https://github.com/uml-robotics/kinova-ros.git
 build
 
