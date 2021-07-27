@@ -125,5 +125,6 @@ git clone -b master https://github.com/Kinovarobotics/ros_kortex_vision.git
 build
 
 printmsg "Cloning gazebo model resources into the hidden .gazebo folder in your home directory for simualtion usage"
+mkdir -p ~/.gazebo
 cd ~/.gazebo
-git clone -b https://github.com/osrf/gazebo_models.git
+git clone -b master https://github.com/osrf/gazebo_models.git

@@ -78,6 +78,7 @@ sudo rosdep init
 rosdep update
 
 printmsg "Create and init a catkin workspace according to the value you entered when running the script"
+source ~/.bashrc
 mkdir -p ~/$WORKSPACE/src
 cd ~/$WORKSPACE
 catkin init
