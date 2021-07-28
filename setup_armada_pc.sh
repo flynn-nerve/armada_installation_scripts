@@ -78,17 +78,18 @@ sudo rosdep init
 rosdep update
 
 printmsg "Create and init a catkin workspace according to the value you entered when running the script"
-source ~/.bashrc
 mkdir -p ~/$WORKSPACE/src
 cd ~/$WORKSPACE
+source /opt/ros/melodic/setup.bash
 catkin init
+source /devel/setup.bash
 catkin build
 
 if [$2 == "full"];
   then
     printmsg "The script will now continue installing files required for full armada_workstation functionality"
     cd ~/installation_scripts
-    ./setup_armada_manipulation_resources $WORKSPACE
+    ./setup_armada_manipulation_resources.sh $WORKSPACE
 
     printmsg "This script will guide you through the process of installing the Qt Creator IDE with a ROS plugin"
     printmsg"Firefox will now open a link to the QT creator ROS plugin Bionic (18.04) online installer download page."
