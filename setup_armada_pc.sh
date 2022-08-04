@@ -2,12 +2,14 @@
 
 WORKSPACE=$1
 VER=$2
+ROS_DISTRO=$3
+
 
 if [ -z $1 ]
   then
     echo "No desired workspace name supplied, please re-run the script"
     echo "Your command should look like ./setup_armada_pc.sh <workspace_name>"
-    echo "For example; ./setup_armada_pc.sh catkin_ws full"
+    echo "For example; ./setup_armada_pc.sh catkin_ws full melodic"
     exit
 fi
 
@@ -15,10 +17,18 @@ if [ -z $2 ]
   then
     echo "Please indicate if you want the <full> or <basic> installation"
     echo "Your command should look like ./setup_armada_pc.sh <workspace_name>"
-    echo "For example; ./setup_armada_pc.sh catkin_ws full"
+    echo "For example; ./setup_armada_pc.sh catkin_ws full melodic"
     echo "or: ./setup_armada_pc.sh catkin_ws basic"
     echo "basic installation will install ROS, catkin tools and cuda toolkit (most recent for 18.04)"
     echo "full installation will install the basic options and the armada_workstation, pick_and_place, robot, realsense and GPD packages, libraries, and files"
+    exit
+fi
+
+if [ -z $3 ]
+  then
+    echo "No desired ros distribution supplied, please re-run the script"
+    echo "Your command should look like ./setup_armada_pc.sh <workspace_name>"
+    echo "For example; ./setup_armada_pc.sh catkin_ws full melodic"
     exit
 fi
 
@@ -54,20 +64,19 @@ printmsg "Setting up catkin tools resource sources list"
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -sc` main" > /etc/apt/sources.list.d/ros-latest.list'
 wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
 
+# https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&Distribution=Ubuntu&//target_version=18.04&target_type=deb_network
+# this page may change, these are newest drivers as of 8/4/2022
+
 printmsg "Setting up cuda toolkit resource sources list"
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin
-sudo mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600
-sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
-sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /"
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-keyring_1.0-1_all.deb
+sudo dpkg -i cuda-keyring*.deb
+sudo apt-get update
 
 printmsg "Update your system to include all of the newly added source lists"
 sudo apt update
 
 printmsg "Install ros melodic, python rosdep and catkin tools, and cuda"
-sudo apt install ros-melodic-desktop-full -y
-sudo apt install python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential -y
-sudo apt install python-catkin-tools -y
-sudo apt install cuda -y
+sudo apt install ros-melodic-desktop-full python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential python-catkin-tools cuda -y
 
 printmsg "Add a line in your .bashrc file to always source your ros workspace upon opening"
 echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
@@ -99,4 +108,3 @@ if [$2 == "full"];
     firefox https://ros-qtc-plugin.readthedocs.io/en/latest/_source/How-to-Install-Users.html#qt-installer-procedure
     printmsg "Follow the instructions at the bottom of the page under the section titled 'Testing Plugin' to connect your ros workspace and then build (hammer in bottom left)"
 fi
-

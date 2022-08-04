@@ -1,12 +1,21 @@
 #!/bin/bash
 
 WORKSPACE=$1
+ROS_DISTRO=$2
 
 if [ -z $1 ]
   then
     echo "No desired workspace name supplied, please re-run the script"
-    echo "Your command should look like ./setup_armada_pc.sh <workspace_name>"
-    echo "For example; ./setup_armada_pc.sh catkin_ws full"
+    echo "Your command should look like ./setup_armada_pc.sh <workspace_name> <ros_distro>"
+    echo "For example; ./setup_armada_manipulation_resources.sh catkin_ws melodic"
+    exit
+fi
+
+if [ -z $2 ]
+  then
+    echo "No ROS distribution specified, please re-run the script"
+    echo "Your command should look like ./setup_armada_pc.sh <workspace_name> <ros_distro>"
+    echo "For example; ./setup_armada_manipulation_resources.sh catkin_ws melodic"
     exit
 fi
 
@@ -33,54 +42,35 @@ printwrn() {
     echo -e "${RED}$1${NC}"
 }
 
-printmsg "installing MoveIt and moveit tutorial packages" 
-echo "These packages have useful reference code and dependenciess we will need anyway when working with MoveIt"
+printmsg "installing MoveIt"
 sudo apt install ros-$ROS_DISTRO-moveit -y
-cd ~/$WORKSPACE/src
-git clone -b $ROS_DISTRO-devel https://github.com/ros-planning/moveit_tutorials.git
-git clone -b $ROS_DISTRO-devel https://github.com/ros-planning/panda_moveit_config.git
 
 printmsg "Installing GPD as a library"
-cd ~/$WORKSPACE/src
+cd ~/$WORKSPACE
 git clone https://github.com/atenpas/gpd
-sed -i -e 's/PCL 1.9 REQUIRED/PCL REQUIRED/g' ~/$WORKSPACE/src/gpd/CMakeLists.txt
+sed -i -e 's/PCL 1.9 REQUIRED/PCL REQUIRED/g' ~/$WORKSPACE/gpd/CMakeLists.txt
 cd gpd
 mkdir build && cd build
 cmake ..
 make -j
 sudo make install
 
-# going to need to fork this repo -----------------------------------------
 printmsg "Cloning and installing the gpd_ros package"
 cd ~/$WORKSPACE/src
 git clone -b master https://github.com/atenpas/gpd_ros
 sed -i -e 's/PCL 1.9 REQUIRED/PCL REQUIRED/g' ~/$WORKSPACE/src/gpd_ros/CMakeLists.txt
-build
-
-printmsg "Cloning the uml_robotics/uml_hri_nerve_armada_workstation package"
-cd ~/$WORKSPACE/src
-git clone -b master https://github.com/uml-robotics/uml_hri_nerve_armada_workstation.git
-printmsg "Cloning the uml_robotics/uml_hri_nerve_pick_and_place package"
-git clone -b master https://github.com/uml-robotics/uml_hri_nerve_pick_and_place.git
-build
+catkin build gpd_ros
 
 printmsg "Cloning the uml_robotics/universal_robot package"
 cd ~/$WORKSPACE/src
-git clone -b dev/bflynn https://github.com/uml-robotics/universal_robot.git
-printmsg "Cloning the uml_robotics/kinova-ros package"
-git clone -b dev/bflynn https://github.com/uml-robotics/kinova-ros.git
-build
-
-printmsg "Installing python3 and conan resources and set conan profile variables"
-sudo apt install python3 python3-pip -y
-sudo python3 -m pip install conan
-conan config set general.revisions_enabled=1
-conan profile new default --detect > /dev/null
-conan profile update settings.compiler.libcxx=libstdc++11 default
-cd ~/$WORKSPACE/src
-printmsg "Cloning the uml_robotics/ros_kortex package"
-git clone -b dev/workstation_sim https://github.com/uml-robotics/ros_kortex.git
-build
+git clone https://github.com/UniversalRobots/Universal_Robots_ROS_Driver.git
+git clone -b calibration_devel https://github.com/fmauch/universal_robot.git fmauch_universal_robot
+sudo apt update -qq
+rosdep update
+cd ~/$WORKSPACE
+rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
+catkin build Universal_Robots_ROS_Driver
+catkin build fmauch_universal_robot
 
 printmsg "Cloning the librealsense package"
 cd ~/$WORKSPACE/src
@@ -91,14 +81,14 @@ sudo apt install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev libglfw
 
 printmsg "Adding keyservers to the list of source repositories"
 sudo apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C8B3A55A6F3EFCDE
-sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main" -u
+sudo add-apt-repository "deb http://librealsense.intel.com/Debian/apt-repo focal main" -u
 
 printmsg "Installing additional librealsense libraries"
 sudo apt install librealsense2-dkms librealsense2-utils librealsense2-dev librealsense2-dbg -y
 
 printmsg "Updating to include new source repositories"
 sudo apt update && sudo apt-get upgrade -y
-build
+catkin build librealsense2
 
 printmsg "Running librealsense script to edit your machine's udev rules to allow communication with the realsense device"
 cd ~/$WORKSPACE/src/librealsense
@@ -116,15 +106,27 @@ git clone -b kinetic-devel https://github.com/pal-robotics/ddynamic_reconfigure.
 
 printmsg "Installing the rgbd_launch/rs_camera package specifically for realsense camera functionality"
 sudo apt install ros-$ROS_DISTRO-rgbd-launch -y
-build
-
-printmsg "Cloning the ros_kortex_vision package and installing additional gstreamer libraries"
-sudo apt install gstreamer1.0-tools gstreamer1.0-libav libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-base -y
-cd ~/$WORKSPACE/src/
-git clone -b master https://github.com/Kinovarobotics/ros_kortex_vision.git
-build
 
 printmsg "Cloning gazebo model resources into the hidden .gazebo folder in your home directory for simualtion usage"
 mkdir -p ~/.gazebo
 cd ~/.gazebo
-git clone -b master https://github.com/osrf/gazebo_models.git
+git clone -b master https://github.com/osrf/gazebo_models.git models
+
+printmsg "Do a final build of all the packages"
+cd ~/$WORKSPACE
+catkin build
+cd -
+
+
+# old stuff for using ros_kortex that might become relevant again
+#printmsg "Installing python3 and conan resources and set conan profile variables"
+#sudo apt install python3 python3-pip -y
+#sudo python3 -m pip install conan
+#conan config set general.revisions_enabled=1
+#conan profile new default --detect > /dev/null
+#conan profile update settings.compiler.libcxx=libstdc++11 default
+#printmsg "Cloning the ros_kortex_vision package and installing additional gstreamer libraries"
+#sudo apt install gstreamer1.0-tools gstreamer1.0-libav libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-base -y
+#cd ~/$WORKSPACE/src/
+#git clone -b master https://github.com/Kinovarobotics/ros_kortex_vision.git
+#build
