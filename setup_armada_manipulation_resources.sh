@@ -112,6 +112,18 @@ mkdir -p ~/.gazebo
 cd ~/.gazebo
 git clone -b master https://github.com/osrf/gazebo_models.git models
 
+printmsg "Cloning Gazebo mimic joint functionality plugin package"
+cd ~/$WORKSPACE/src
+git clone https://github.com/roboticsgroup/roboticsgroup_upatras_gazebo_plugins.git
+
+printmsg "Installing FlexBe"
+sudo apt install ros-$ROS_DISTRO-flexbe-behavior-engine
+cd ~/$WORKSPACE/src
+git clone https://github.com/FlexBE/flexbe_app.git
+git clone https://github.com/FlexBE/generic_flexbe_states.git
+
+sudo apt install ros-melodic-gripper-action-controller
+
 printmsg "Do a final build of all the packages"
 cd ~/$WORKSPACE
 catkin build
