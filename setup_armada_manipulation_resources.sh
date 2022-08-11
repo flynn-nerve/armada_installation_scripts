@@ -108,7 +108,6 @@ printmsg "Installing the rgbd_launch/rs_camera package specifically for realsens
 sudo apt install ros-$ROS_DISTRO-rgbd-launch -y
 
 printmsg "Cloning gazebo model resources into the hidden .gazebo folder in your home directory for simualtion usage"
-mkdir -p ~/.gazebo
 cd ~/.gazebo
 git clone -b master https://github.com/osrf/gazebo_models.git models
 
