@@ -53,6 +53,8 @@ printmsg "Setting up catkin tools resource sources list"
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -sc` main" > /etc/apt/sources.list.d/ros-latest.list'
 wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
 
+sudo apt update
+
 printmsg "Install ros melodic, python, rosdep, and catkin tools"
 sudo apt install ros-melodic-desktop-full python-rosdep python-rosinstall python-rosinstall-generator python-wstool build-essential python-catkin-tools -y
 
