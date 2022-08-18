@@ -46,6 +46,7 @@ mkdir build && cd build
 cmake ..
 make -j
 sudo make install
+catkin build
 
 printmsg "Cloning and installing the gpd_ros package"
 cd ~/$WORKSPACE/src
