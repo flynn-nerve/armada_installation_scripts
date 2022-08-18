@@ -6,15 +6,7 @@ if [ -z $1 ]
   then
     echo "No desired workspace name supplied, please re-run the script"
     echo "Your command should look like ./setup_armada_pc.sh <workspace_name>>"
-    echo "For example; ./setup_armada_manipulation_resources.sh catkin_ws"
-    exit
-fi
-
-if [ -z $2 ]
-  then
-    echo "No ROS distribution specified, please re-run the script"
-    echo "Your command should look like ./setup_armada_pc.sh <workspace_name>"
-    echo "For example; ./setup_armada_manipulation_resources.sh catkin_ws "
+    echo "For example; ./setup_armada_workspace.sh catkin_ws"
     exit
 fi
 
