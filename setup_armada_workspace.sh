@@ -16,15 +16,6 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-build() {
-    # install any dependencies then build
-    cd ~/$WORKSPACE
-    source devel/setup.bash
-    rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
-    catkin build
-    source devel/setup.bash
-}
-
 printmsg() {
     echo -e "${GREEN}$1${NC}"
 }
@@ -35,12 +26,13 @@ printwrn() {
 
 printmsg "installing MoveIt"
 sudo apt install ros-$ROS_DISTRO-moveit -y
+sudo apt install ros-$ROS_DISTRO-gripper-action-controller -y
 
 printmsg "Installing GPD as a library"
 cd ~/$WORKSPACE/src
 git clone https://github.com/atenpas/gpd
-sed -i -e "s|PCL 1.9 REQUIRED|PCL REQUIRED|g" ~/$WORKSPACE/src/gpd/CMakeLists.txt
-sed -i -e "s|weights_file = /home/andreas/projects/gpd/lenet/15channels/params/|weights_file = /home/$USER/$WORKSPACE/src/gpd/models/lenet/15channels/params/|g" ~/$WORKSPACE/src/gpd/cfg/ros_eigen_params.cfg
+sed -i -e -r "s|PCL 1.9 REQUIRED|PCL REQUIRED|g" ~/$WORKSPACE/src/gpd/CMakeLists.txt
+sed -i -e -r "s|weights_file = /home/andreas/projects/gpd/lenet/15channels/params/|weights_file = /home/$USER/$WORKSPACE/src/gpd/models/lenet/15channels/params/|g" ~/$WORKSPACE/src/gpd/cfg/ros_eigen_params.cfg
 cd gpd
 mkdir build && cd build
 cmake ..
@@ -51,7 +43,7 @@ catkin build
 printmsg "Cloning and installing the gpd_ros package"
 cd ~/$WORKSPACE/src
 git clone -b master https://github.com/atenpas/gpd_ros
-sed -i -e "s/PCL 1.9 REQUIRED/PCL REQUIRED/g" ~/$WORKSPACE/src/gpd_ros/CMakeLists.txt
+sed -i -r -e "s/PCL 1.9 REQUIRED/PCL REQUIRED/g" ~/$WORKSPACE/src/gpd_ros/CMakeLists.txt
 catkin build gpd_ros
 
 printmsg "Cloning UniversalRobots packages"
@@ -71,20 +63,31 @@ sudo apt install ros-$ROS_DISTRO-realsense2-camera -y
 sudo apt install ros-$ROS_DISTRO-realsense2-description -y
 
 printmsg "Installing FlexBe"
-sudo apt install ros-$ROS_DISTRO-flexbe-behavior-engine
+sudo apt install ros-$ROS_DISTRO-flexbe-behavior-engine -y
 cd ~/$WORKSPACE/src
 git clone https://github.com/FlexBE/flexbe_app.git
 git clone https://github.com/FlexBE/generic_flexbe_states.git
-
-printmsg "Cloning gazebo model resources into the hidden .gazebo folder in your home directory for simualtion usage"
-cd ~/.gazebo
-git clone -b master https://github.com/osrf/gazebo_models.git models
+cd ~/$WORKSPACE
+rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
 
 printmsg "Cloning Gazebo mimic joint functionality plugin package"
 cd ~/$WORKSPACE/src
 git clone https://github.com/roboticsgroup/roboticsgroup_upatras_gazebo_plugins.git
+cd ~/$WORKSPACE
+rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
+catkin build roboticsgroup_upatras_gazebo_plugins
 
-sudo apt install ros-melodic-gripper-action-controller
+printmsg "Installing Robotiq gripper package"
+cd ~/$WORKSPACE/src
+git clone -b kinetic-devel https://github.com/ros-industrial/robotiq.git
+sed -i -r -e "s|, inputMsg.Robotiq2FGripper_robot_input|, inputMsg.Robotiq2FGripper_robot_input, queue_size=10|g" ~/$WORKSPACE/src/robotiq/robotiq_2f_gripper_control/nodes/Robotiq2FGripperTcpNode.py
+cd ~/$WORKSPACE
+rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
+catkin build
+
+printmsg "Cloning gazebo model resources into the hidden .gazebo folder in your home directory for simualtion usage"
+cd ~/.gazebo
+git clone -b master https://github.com/osrf/gazebo_models.git models
 
 printmsg "Do a final build of all the packages"
 cd ~/$WORKSPACE
