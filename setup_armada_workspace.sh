@@ -39,8 +39,8 @@ sudo apt install ros-$ROS_DISTRO-moveit -y
 printmsg "Installing GPD as a library"
 cd ~/$WORKSPACE/src
 git clone https://github.com/atenpas/gpd
-sed -i -e 's|PCL 1.9 REQUIRED|PCL REQUIRED|g' ~/$WORKSPACE/src/gpd/CMakeLists.txt
-sed -i -e 's|weights_file = /home/andreas/projects/gpd/lenet/15channels/params/|weights_file = /home/$USER/$WORKSPACE/gpd/models/lenet/15channels/params/|g' ~/$WORKSPACE/src/gpd/cfg/ros_eigen_params.cfg
+sed -i -e "s|PCL 1.9 REQUIRED|PCL REQUIRED|g" ~/$WORKSPACE/src/gpd/CMakeLists.txt
+sed -i -e "s|weights_file = /home/andreas/projects/gpd/lenet/15channels/params/|weights_file = /home/$USER/$WORKSPACE/src/gpd/models/lenet/15channels/params/|g" ~/$WORKSPACE/src/gpd/cfg/ros_eigen_params.cfg
 cd gpd
 mkdir build && cd build
 cmake ..
@@ -51,7 +51,7 @@ catkin build
 printmsg "Cloning and installing the gpd_ros package"
 cd ~/$WORKSPACE/src
 git clone -b master https://github.com/atenpas/gpd_ros
-sed -i -e 's/PCL 1.9 REQUIRED/PCL REQUIRED/g' ~/$WORKSPACE/src/gpd_ros/CMakeLists.txt
+sed -i -e "s/PCL 1.9 REQUIRED/PCL REQUIRED/g" ~/$WORKSPACE/src/gpd_ros/CMakeLists.txt
 catkin build gpd_ros
 
 printmsg "Cloning UniversalRobots packages"
