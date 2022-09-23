@@ -77,6 +77,14 @@ cd ~/$WORKSPACE
 rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
 catkin build roboticsgroup_upatras_gazebo_plugins
 
+printmsg "Cloning Gazebo grasp fix plugin packages"
+cd ~/$WORKSPACE/src
+git clone https://github.com/JenniferBuehler/general-message-pkgs.git
+git clone https://github.com/JenniferBuehler/gazebo-pkgs.git
+cd ~/$WORKSPACE
+rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
+catkin build
+
 printmsg "Installing Robotiq gripper package"
 cd ~/$WORKSPACE/src
 git clone -b kinetic-devel https://github.com/ros-industrial/robotiq.git
